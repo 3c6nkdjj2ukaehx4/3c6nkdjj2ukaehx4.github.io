@@ -1,0 +1,1906 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link
+  rel="icon"
+  href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">☕</text></svg>'
+>
+<title>The Coffee Shop</title>
+<style>
+  :root{
+    --bg:#0b0b0b;
+    --bg-elev:#141414;
+    --primary:#ff7a29;
+    --primary-soft:rgba(255,122,41,0.10);
+    --text:#ffffff;
+    --text-2:#8a8a8a;
+    --border:rgba(255,255,255,0.06);
+    --border-hover:rgba(255,122,41,0.45);
+    --success:#ff7a29;
+    --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    --font-mono: 'SFMono-Regular', Consolas, 'Courier New', monospace;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    min-height:100vh;
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--font);
+    line-height:1.5;
+  }
+
+  body{
+    background:var(--bg);
+  }
+
+  .visually-hidden{
+    position:absolute; width:1px; height:1px; overflow:hidden;
+    clip:rect(0 0 0 0); white-space:nowrap;
+  }
+
+  /* ---------- GATE ---------- */
+  #gate{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+  }
+
+  .gateCard{
+    width:100%;
+    max-width:320px;
+    text-align:center;
+    background:var(--bg-elev);
+    border:1px solid var(--border);
+    border-radius:18px;
+    box-shadow:0 20px 50px rgba(0,0,0,0.45);
+    padding:34px 28px 30px;
+  }
+
+  .lockIcon{
+    width:54px; height:54px;
+    margin:0 auto 20px;
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:22px;
+    background:var(--primary-soft);
+    border:1px solid var(--border-hover);
+    color:var(--primary);
+    transition:transform 0.5s cubic-bezier(.4,0,.2,1), opacity 0.5s ease;
+  }
+  .lockIcon.melt{ transform:scale(0.5); opacity:0; }
+
+  .eyebrow{
+    font-family:var(--font-mono);
+    font-size:11px;
+    letter-spacing:0.18em;
+    text-transform:uppercase;
+    color:var(--primary);
+    margin:0 0 22px;
+  }
+
+  #password-form{ display:flex; flex-direction:column; gap:12px; }
+
+  #password{
+    background:rgba(255,255,255,0.03);
+    border:1px solid var(--border);
+    border-radius:10px;
+    color:var(--text);
+    font-family:var(--font);
+    font-size:15px;
+    text-align:center;
+    padding:12px 14px;
+    outline:none;
+    transition:border-color 0.2s ease, background 0.2s ease;
+  }
+  #password::placeholder{ color:var(--text-2); }
+  #password:focus{ border-color:var(--primary); background:rgba(255,122,41,0.06); }
+
+  #unlock-btn{
+    background:var(--primary);
+    color:#1a1006;
+    border:none;
+    border-radius:10px;
+    font-family:var(--font);
+    font-size:14px;
+    font-weight:700;
+    padding:12px 18px;
+    cursor:pointer;
+    transition:transform 0.15s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+  }
+  #unlock-btn:hover{ box-shadow:0 8px 18px rgba(0,0,0,0.5); transform:translateY(-1px); }
+  #unlock-btn:active{ transform:translateY(0); }
+  #unlock-btn:disabled{ opacity:0.6; cursor:default; transform:none; }
+  #unlock-btn:focus-visible, #password:focus-visible{
+    outline:2px solid var(--primary); outline-offset:2px;
+  }
+
+  #gate-msg{
+    min-height:18px;
+    font-family:var(--font-mono);
+    font-size:12px;
+    color:#e08a8a;
+    margin-top:14px;
+  }
+  #gate-msg.working{ color:var(--primary); }
+
+  /* ---------- SHOP ---------- */
+  #shop{ display:none; }
+
+  .header{
+    position:fixed;
+    top:0; left:0; right:0;
+    z-index:1000;
+    background:linear-gradient(145deg, rgba(10,10,10,0.85), rgba(6,6,6,0.85));
+    backdrop-filter:blur(12px);
+    border-bottom:1px solid var(--border);
+    padding:1rem 1.5rem;
+  }
+  .headerContent{
+    max-width:1080px; margin:0 auto;
+    display:flex; align-items:center; justify-content:space-between; gap:1rem;
+  }
+  .headerContent h1{
+    font-size:1.3rem; font-weight:800; letter-spacing:-0.02em;
+    margin:0; color:var(--text);
+  }
+  .headerRight{
+    display:flex; align-items:center; gap:0.7rem;
+  }
+  .badge{
+    display:inline-flex; align-items:center; gap:0.4rem;
+    background:var(--primary-soft);
+    border:1px solid var(--border-hover);
+    border-radius:20px;
+    padding:0.3rem 0.8rem;
+    font-size:0.72rem; font-weight:600;
+    color:#f0c9a8;
+    white-space:nowrap;
+  }
+  .badgeDot{
+    width:6px; height:6px; border-radius:50%;
+    background:var(--success);
+    box-shadow:0 0 6px rgba(255,122,41,0.8);
+    animation:pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse{
+    0%,100%{ opacity:1; } 50%{ opacity:0.5; }
+  }
+
+  #cart-btn{
+    position:relative;
+    display:inline-flex; align-items:center; gap:0.6rem;
+    background:rgba(255,255,255,0.03);
+    border:1px solid var(--border);
+    border-radius:20px;
+    padding:0.45rem 0.45rem 0.45rem 0.8rem;
+    color:var(--text);
+    font-family:var(--font);
+    font-size:0.82rem;
+    font-weight:600;
+    cursor:pointer;
+    transition:border-color 0.2s ease, background 0.2s ease, transform 0.15s ease;
+  }
+  #cart-btn:hover{ border-color:var(--border-hover); background:var(--primary-soft); }
+  #cart-btn:active{ padding:0.45rem 0rem 0.45rem 0.8rem; transform:translateY(1px); }
+  #cart-btn:focus-visible{ outline:2px solid var(--primary); outline-offset:2px; }
+
+  .cart-icon-wrap{
+    position:relative;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+  }
+  #cart-btn .cart-icon{ font-size:1rem; line-height:1; }
+
+  #cart-total{ color:var(--text-2); font-weight:400; font-size:0.78rem; }
+
+  #cart-count{
+    display:inline-flex; align-items:center; justify-content:center;
+    min-width:19px; height:19px;
+    padding:0 6px;
+    border-radius:999px;
+    background:var(--primary);
+    color:#1a1006;
+    font-family:var(--font-mono);
+    font-size:11px;
+    font-weight:800;
+    line-height:1;
+    transition:transform 0.15s ease;
+
+    position: relative;
+    left: 10px;
+  }
+  #cart-count.bump{ transform:scale(1.3); }
+  #cart-count[data-empty="true"]{ display:none; }
+
+  .mainContainer{
+    max-width:1080px;
+    margin:0 auto;
+    padding:104px 24px 30px;
+  }
+
+  .notification{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:var(--primary-soft);
+    border:1px solid var(--border-hover);
+    border-radius:12px;
+    padding:14px 18px;
+    margin-bottom:22px;
+    font-size:0.9rem;
+    color:var(--text);
+    line-height:1.5;
+  }
+  .notification::before{
+    content:"📣";
+    font-size:1rem;
+    flex-shrink:0;
+  }
+
+  /* ---------- CONTROLS (search / filter / sort) ---------- */
+  .controls{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:12px;
+    margin-bottom:20px;
+  }
+
+  .search-wrap{
+    position:relative;
+    flex:1 1 220px;
+    min-width:180px;
+  }
+  .search-wrap .search-icon{
+    position:absolute;
+    left:12px; top:50%;
+    transform:translateY(-50%);
+    font-size:13px;
+    color:var(--text-2);
+    pointer-events:none;
+  }
+  #search-input{
+    width:100%;
+    background:rgba(255,255,255,0.03);
+    border:1px solid var(--border);
+    border-radius:10px;
+    color:var(--text);
+    font-family:var(--font);
+    font-size:13.5px;
+    padding:10px 34px 10px 32px;
+    outline:none;
+    transition:border-color 0.2s ease, background 0.2s ease;
+  }
+  #search-input::placeholder{ color:var(--text-2); }
+  #search-input:focus{ border-color:var(--primary); background:rgba(255,122,41,0.06); }
+  #search-clear{
+    position:absolute;
+    right:6px; top:50%;
+    transform:translateY(-50%);
+    display:none;
+    align-items:center; justify-content:center;
+    width:22px; height:22px;
+    background:transparent;
+    border:none;
+    color:var(--text-2);
+    font-size:13px;
+    line-height:1;
+    cursor:pointer;
+    border-radius:7px;
+    transition:color 0.15s ease, background 0.15s ease;
+  }
+  #search-clear:hover{ color:var(--text); background:rgba(255,255,255,0.06); }
+  #search-clear.visible{ display:inline-flex; }
+  #search-clear:focus-visible{ outline:2px solid var(--primary); outline-offset:2px; }
+
+  .sort-wrap{
+    position:relative;
+    flex:0 0 auto;
+  }
+  #sort-btn{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    background:rgba(255,255,255,0.03);
+    border:1px solid var(--border);
+    border-radius:10px;
+    color:var(--text);
+    font-family:var(--font);
+    font-size:13px;
+    font-weight:600;
+    padding:10px 14px;
+    outline:none;
+    cursor:pointer;
+    white-space:nowrap;
+    transition:border-color 0.2s ease, background-color 0.2s ease;
+  }
+  #sort-btn:hover{ border-color:var(--border-hover); background:var(--primary-soft); }
+  #sort-btn:focus-visible{ outline:2px solid var(--primary); outline-offset:2px; }
+  #sort-btn .sort-btn-label .sort-btn-prefix{ color:var(--text-2); font-weight:400; }
+  #sort-btn .sort-caret{
+    display:inline-flex;
+    color:var(--text-2);
+    transition:transform 0.18s ease;
+    flex-shrink:0;
+  }
+  #sort-btn[aria-expanded="true"] .sort-caret{ transform:rotate(180deg); }
+  #sort-btn[aria-expanded="true"]{ border-color:var(--primary); background:var(--primary-soft); }
+
+  .sort-menu{
+    position:absolute;
+    top:calc(100% + 8px);
+    right:0;
+    min-width:190px;
+    background:var(--bg-elev);
+    border:1px solid var(--border);
+    border-radius:12px;
+    box-shadow:0 16px 40px rgba(0,0,0,0.5);
+    padding:6px;
+    z-index:1100;
+    display:none;
+    flex-direction:column;
+    gap:2px;
+    animation:sortMenuIn 0.15s ease;
+  }
+  .sort-menu.open{ display:flex; }
+  @keyframes sortMenuIn{
+    from{ opacity:0; transform:translateY(-4px); }
+    to{ opacity:1; transform:translateY(0); }
+  }
+
+  .sort-option{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    background:transparent;
+    border:none;
+    border-radius:8px;
+    color:var(--text-2);
+    font-family:var(--font);
+    font-size:13px;
+    font-weight:600;
+    text-align:left;
+    padding:9px 10px;
+    cursor:pointer;
+    transition:background 0.15s ease, color 0.15s ease;
+  }
+  .sort-option:hover{ background:rgba(255,255,255,0.05); color:var(--text); }
+  .sort-option:focus-visible{ outline:2px solid var(--primary); outline-offset:-2px; }
+  .sort-option.selected{ color:var(--primary); background:var(--primary-soft); }
+  .sort-option .sort-check{
+    opacity:0;
+    color:var(--primary);
+    font-size:12px;
+    flex-shrink:0;
+  }
+  .sort-option.selected .sort-check{ opacity:1; }
+
+  .type-filters{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-bottom:20px;
+  }
+  .type-chip{
+    background:rgba(255,255,255,0.02);
+    border:1px solid var(--border);
+    border-radius:20px;
+    color:var(--text-2);
+    font-family:var(--font);
+    font-size:12.5px;
+    font-weight:600;
+    padding:7px 14px;
+    cursor:pointer;
+    transition:all 0.18s ease;
+    white-space:nowrap;
+  }
+  .type-chip:hover{ border-color:var(--border-hover); color:var(--text); }
+  .type-chip.active{
+    background:var(--primary);
+    border-color:var(--primary);
+    color:#1a1006;
+  }
+  .type-chip:focus-visible{ outline:2px solid var(--primary); outline-offset:2px; }
+  .type-chip .chip-count{
+    opacity:0.7;
+    margin-left:2px;
+  }
+
+  .empty-state{
+    text-align:center;
+    color:var(--text-2);
+    font-size:0.92rem;
+    padding:60px 20px;
+    border:1px dashed var(--border);
+    border-radius:16px;
+  }
+  .empty-state strong{ color:var(--text); }
+
+  @media (max-width:640px){
+    .controls{ flex-direction:column; align-items:stretch; }
+    .sort-wrap{ width:100%; }
+    #sort-btn{ width:100%; justify-content:space-between; }
+    .sort-menu{ left:0; right:0; min-width:0; }
+  }
+
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(260px, 1fr));
+    gap:22px;
+  }
+
+  .card{
+    background:var(--bg-elev);
+    border:1px solid var(--border);
+    border-radius:16px;
+    overflow:hidden;
+    display:flex; flex-direction:column;
+    transition:transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+  }
+  .card:hover{
+    transform:translateY(-5px);
+    border-color:var(--border-hover);
+    box-shadow:0 16px 34px rgba(0,0,0,0.45), 0 0 20px rgba(255,122,41,0.18);
+  }
+
+  .card.out-of-stock{
+    opacity:0.62;
+  }
+  .card.out-of-stock:hover{
+    transform:none;
+    box-shadow:none;
+    border-color:var(--border);
+  }
+  .card.out-of-stock .photo-wrap img{
+    filter:grayscale(0.6);
+  }
+
+  .card .photo-wrap{
+    width:100%; aspect-ratio:1/1;
+    background:var(--bg-elev);
+    overflow:hidden;
+    border-bottom:1px solid var(--border);
+    position:relative;
+  }
+  .card .photo-wrap img{
+    width:100%; height:100%; object-fit:cover; display:block;
+    transition:transform 0.5s ease;
+  }
+  .card:hover .photo-wrap img{ transform:scale(1.05); }
+
+  .newBadge{
+    position:absolute;
+    top:10px; right:10px;
+    background:var(--primary);
+    color:#1a1006;
+    font-family:var(--font-mono);
+    font-size:10px;
+    font-weight:700;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    padding:4px 9px;
+    border-radius:20px;
+    box-shadow:0 4px 12px rgba(0,0,0,0.35);
+  }
+
+  /* Stock badges share newBadge's shape/position; stack under it when both exist */
+  .stockBadge{
+    position:absolute;
+    top:10px; right:10px;
+    font-family:var(--font-mono);
+    font-size:10px;
+    font-weight:700;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    padding:4px 9px;
+    border-radius:20px;
+    box-shadow:0 4px 12px rgba(0,0,0,0.35);
+    white-space:nowrap;
+  }
+  .newBadge + .stockBadge,
+  .stockBadge + .newBadge{
+    top:38px;
+  }
+
+  .stockBadge.out{
+    background:#2a2a2a;
+    color:#c9c9c9;
+    border:1px solid rgba(255,255,255,0.12);
+  }
+  .stockBadge.low{
+    background:#f5b731;
+    color:#241a02;
+  }
+  .stockBadge.restocked{
+    background:#2ecc71;
+    color:#0c1f12;
+  }
+
+  .card .body{ padding:20px 20px 18px; display:flex; flex-direction:column; flex:1; }
+
+  .card h3{ font-size:1.2rem; font-weight:700; margin:0 0 8px; letter-spacing:-0.01em; }
+
+  .card p.desc{
+    font-size:0.88rem; line-height:1.55; color:var(--text-2);
+    margin:0 0 16px; flex:1;
+  }
+
+  .amounts{ display:flex; gap:8px; margin-bottom:16px; }
+  .amounts button{
+    flex:1;
+    background:rgba(255,255,255,0.02);
+    border:1px solid var(--border);
+    border-radius:8px;
+    color:var(--text-2);
+    font-family:var(--font-mono);
+    font-size:11px;
+    padding:7px 4px;
+    cursor:pointer;
+    transition:all 0.18s ease;
+  }
+  .amounts button:hover{ border-color:var(--border-hover); color:var(--text); }
+  .amounts button.selected{
+    background:var(--primary);
+    border-color:var(--primary);
+    color:#1a1006;
+    font-weight:700;
+  }
+  .amounts button:focus-visible{ outline:2px solid var(--primary); outline-offset:2px; }
+  .amounts button:disabled{ opacity:0.4; cursor:default; }
+
+  .card .row{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding-top:14px;
+    border-top:1px dashed var(--border);
+  }
+
+  .card .price{ font-family:var(--font-mono); font-size:17px; color:var(--text); font-weight:700; }
+  .card .price .unit{ font-size:11px; color:var(--text-2); margin-left:4px; font-weight:400; }
+
+  .add-to-cart-btn{
+    flex-shrink:0;
+    display:inline-flex; align-items:center; gap:6px;
+    background:var(--primary);
+    color:#1a1006;
+    border:none;
+    border-radius:8px;
+    font-family:var(--font);
+    font-size:12.5px;
+    font-weight:700;
+    padding:9px 14px;
+    cursor:pointer;
+    transition:transform 0.15s ease, box-shadow 0.2s ease, background 0.2s ease;
+  }
+  .add-to-cart-btn:hover{ box-shadow:0 6px 16px rgba(255,122,41,0.35); transform:translateY(-1px); }
+  .add-to-cart-btn:active{ transform:translateY(0); }
+  .add-to-cart-btn:focus-visible{ outline:2px solid var(--primary); outline-offset:2px; }
+  .add-to-cart-btn.added{ background:#2ecc71; color:#0c1f12; }
+  .add-to-cart-btn:disabled{
+    background:rgba(255,255,255,0.06);
+    color:var(--text-2);
+    cursor:default;
+    box-shadow:none;
+    transform:none;
+  }
+
+  .footer{
+    text-align:center;
+    margin-top:40px;
+    padding:1.2rem 1rem;
+    background:linear-gradient(145deg, rgba(10,10,10,0.85), rgba(6,6,6,0.85));
+    border-top:1px solid var(--border);
+    font-size:0.78rem;
+    color:var(--text-2);
+  }
+
+  /* ---------- CART MODAL ---------- */
+  .modal-overlay{
+    position:fixed; inset:0; z-index:2000;
+    background:rgba(0,0,0,0.65);
+    backdrop-filter:blur(4px);
+    display:flex; align-items:center; justify-content:center;
+    padding:24px;
+    animation:fadeIn 0.18s ease;
+  }
+  @keyframes fadeIn{ from{ opacity:0; } to{ opacity:1; } }
+
+  .modal-card{
+    width:100%; max-width:400px;
+    max-height:86vh;
+    display:flex; flex-direction:column;
+    text-align:left;
+    background:var(--bg-elev);
+    border:1px solid var(--border);
+    border-radius:20px;
+    box-shadow:0 24px 60px rgba(0,0,0,0.55);
+    overflow:hidden;
+    animation:modalRise 0.22s cubic-bezier(.4,0,.2,1);
+  }
+  @keyframes modalRise{
+    from{ transform:translateY(10px); opacity:0; }
+    to{ transform:translateY(0); opacity:1; }
+  }
+
+  .modal-header{
+    display:flex; align-items:center; gap:12px;
+    padding:22px 24px 18px;
+    flex-shrink:0;
+    border-bottom:1px solid var(--border);
+  }
+  .modal-icon{
+    width:38px; height:38px; flex-shrink:0;
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:16px;
+    background:var(--primary-soft);
+    border:1px solid var(--border-hover);
+    color:var(--primary);
+  }
+  .modal-header h2{
+    flex:1;
+    font-size:1.05rem; font-weight:800; letter-spacing:-0.01em;
+    margin:0; color:var(--text);
+  }
+  .modal-header-count{
+    font-family:var(--font-mono);
+    font-size:0.72rem;
+    font-weight:700;
+    color:var(--text-2);
+    background:rgba(255,255,255,0.05);
+    border-radius:20px;
+    padding:3px 9px;
+  }
+  .modal-close{
+    background:transparent;
+    border:none;
+    color:var(--text-2);
+    font-size:15px;
+    line-height:1;
+    cursor:pointer;
+    padding:6px 8px;
+    border-radius:8px;
+    transition:color 0.15s ease, background 0.15s ease;
+  }
+  .modal-close:hover{ color:var(--text); background:rgba(255,255,255,0.06); }
+  .modal-close:focus-visible{ outline:2px solid var(--primary); outline-offset:2px; }
+
+  .modal-body{
+    overflow-y:auto;
+    flex:1;
+    padding:8px 24px;
+  }
+
+  .cart-line{
+    display:flex; align-items:center; gap:12px;
+    padding:14px 0;
+    border-bottom:1px dashed var(--border);
+  }
+  .cart-line:last-child{ border-bottom:none; }
+
+  .cart-line-thumb{
+    width:52px; height:52px; flex-shrink:0;
+    border-radius:10px;
+    overflow:hidden;
+    background:rgba(255,255,255,0.04);
+    border:1px solid var(--border);
+  }
+  .cart-line-thumb img{
+    width:100%; height:100%; object-fit:cover; display:block;
+  }
+
+  .cart-line-info{ min-width:0; flex:1; }
+  .cart-line-title{
+    font-size:0.88rem; font-weight:600; color:var(--text);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .cart-line-meta{ font-size:0.76rem; color:var(--text-2); margin-top:2px; }
+  .cart-line-price{
+    font-family:var(--font-mono); font-size:0.82rem; color:var(--text);
+    white-space:nowrap; margin-top:6px; font-weight:700;
+  }
+
+  .cart-line-end{
+    display:flex; flex-direction:column; align-items:flex-end; gap:8px; flex-shrink:0;
+  }
+
+  .cart-line-remove{
+    background:transparent;
+    border:none;
+    color:var(--text-2);
+    font-family:var(--font);
+    font-size:11px;
+    font-weight:600;
+    cursor:pointer;
+    padding:2px 2px;
+    transition:color 0.15s ease;
+  }
+  .cart-line-remove:hover{ color:#e08a8a; }
+  .cart-line-remove:focus-visible{ outline:2px solid var(--primary); outline-offset:2px; border-radius:4px; }
+
+  .qty-stepper{
+    display:flex; align-items:center; gap:0;
+    border:1px solid var(--border);
+    border-radius:8px;
+    overflow:hidden;
+  }
+  .qty-stepper button{
+    display:inline-flex; align-items:center; justify-content:center;
+    width:24px; height:24px;
+    background:rgba(255,255,255,0.03);
+    border:none;
+    color:var(--text);
+    font-size:13px;
+    line-height:1;
+    cursor:pointer;
+    transition:background 0.15s ease, color 0.15s ease;
+  }
+  .qty-stepper button:hover{ background:var(--primary-soft); color:var(--primary); }
+  .qty-stepper button:focus-visible{ outline:2px solid var(--primary); outline-offset:-2px; }
+  .qty-stepper button.qty-remove:hover{ background:rgba(224,138,138,0.12); color:#e08a8a; }
+  .qty-stepper .qty-value{
+    min-width:22px;
+    text-align:center;
+    font-family:var(--font-mono);
+    font-size:12px;
+    font-weight:700;
+    color:var(--text);
+  }
+
+  .cart-empty{
+    text-align:center;
+    color:var(--text-2);
+    font-size:0.88rem;
+    padding:48px 12px 40px;
+  }
+  .cart-empty-icon{
+    font-size:2rem;
+    margin-bottom:12px;
+    opacity:0.55;
+  }
+  .cart-empty strong{ display:block; color:var(--text); font-size:0.95rem; margin-bottom:4px; }
+
+  .modal-footer-wrap{
+    flex-shrink:0;
+    padding:16px 24px 22px;
+    border-top:1px solid var(--border);
+    background:linear-gradient(180deg, transparent, rgba(0,0,0,0.15));
+  }
+
+  .cart-total-row{
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:14px;
+    font-size:0.9rem;
+    font-weight:700;
+    color:var(--text);
+  }
+  .cart-total-row .cart-total-amt{
+    font-family:var(--font-mono);
+    color:var(--primary);
+    font-size:1.15rem;
+  }
+
+  .modal-footer{ display:flex; gap:10px; }
+  .modal-secondary-btn{
+    flex:1;
+    background:rgba(255,255,255,0.03);
+    border:1px solid var(--border);
+    border-radius:10px;
+    color:var(--text);
+    font-family:var(--font);
+    font-size:13px;
+    font-weight:700;
+    padding:12px 14px;
+    cursor:pointer;
+    transition:border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+  }
+  .modal-secondary-btn:hover{ border-color:var(--border-hover); background:var(--primary-soft); }
+  .modal-secondary-btn:focus-visible{ outline:2px solid var(--primary); outline-offset:2px; }
+  .modal-secondary-btn:disabled{ opacity:0.5; cursor:default; }
+  .modal-secondary-btn.copied{ background:#2ecc71; border-color:#2ecc71; color:#0c1f12; }
+
+  .modal-crypto-btn{
+    flex:1;
+    display:inline-flex; align-items:center; justify-content:center; gap:7px;
+    background:linear-gradient(135deg, #f7931a, #ffb347);
+    border:1px solid rgba(247,147,26,0.5);
+    border-radius:10px;
+    color:#1a1006;
+    font-family:var(--font);
+    font-size:13px;
+    font-weight:800;
+    padding:12px 14px;
+    cursor:pointer;
+    transition:transform 0.15s ease, box-shadow 0.2s ease, filter 0.2s ease;
+  }
+  .modal-crypto-btn:hover{ box-shadow:0 6px 16px rgba(247,147,26,0.35); transform:translateY(-1px); filter:brightness(1.05); }
+  .modal-crypto-btn:active{ transform:translateY(0); }
+  .modal-crypto-btn:focus-visible{ outline:2px solid var(--primary); outline-offset:2px; }
+  .modal-crypto-btn:disabled{ opacity:0.5; cursor:default; box-shadow:none; transform:none; }
+
+  /* ---------- CRYPTO PANEL ---------- */
+  .crypto-panel{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:20px 24px 8px;
+  }
+
+  .crypto-coin-toggle{
+    display:flex;
+    gap:8px;
+    width:100%;
+    margin-bottom:20px;
+  }
+  .crypto-coin-btn{
+    flex:1;
+    display:inline-flex; align-items:center; justify-content:center; gap:6px;
+    background:rgba(255,255,255,0.03);
+    border:1px solid var(--border);
+    border-radius:10px;
+    color:var(--text-2);
+    font-family:var(--font);
+    font-size:13px;
+    font-weight:700;
+    padding:10px 12px;
+    cursor:pointer;
+    transition:all 0.18s ease;
+  }
+  .crypto-coin-btn:hover{ border-color:var(--border-hover); color:var(--text); }
+  .crypto-coin-btn.selected{
+    background:var(--primary);
+    border-color:var(--primary);
+    color:#1a1006;
+  }
+  .crypto-coin-btn:focus-visible{ outline:2px solid var(--primary); outline-offset:2px; }
+  .crypto-coin-symbol{ font-size:15px; line-height:1; }
+
+  .crypto-qr-wrap{
+    background:#ffffff;
+    border-radius:16px;
+    padding:16px;
+    box-shadow:0 8px 24px rgba(0,0,0,0.35);
+    margin-bottom:16px;
+  }
+  .crypto-qr{
+    width:180px; height:180px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .crypto-qr canvas, .crypto-qr img{
+    width:100% !important; height:100% !important;
+    display:block;
+    image-rendering:pixelated;
+  }
+  .crypto-qr-loading{
+    font-family:var(--font-mono);
+    font-size:11px;
+    color:#999;
+  }
+
+  .crypto-amount{
+    font-family:var(--font-mono);
+    font-size:1.05rem;
+    font-weight:800;
+    color:var(--primary);
+    margin-bottom:18px;
+    text-align:center;
+  }
+  .crypto-amount .crypto-amount-usd{
+    display:block;
+    font-family:var(--font);
+    font-size:0.72rem;
+    font-weight:600;
+    color:var(--text-2);
+    margin-top:2px;
+  }
+
+  .crypto-address-label{
+    align-self:flex-start;
+    font-family:var(--font-mono);
+    font-size:10px;
+    font-weight:700;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--text-2);
+    margin-bottom:6px;
+  }
+  .crypto-address-row{
+    display:flex;
+    gap:8px;
+    width:100%;
+    margin-bottom:16px;
+  }
+  .crypto-address-field{
+    flex:1;
+    min-width:0;
+    background:rgba(255,255,255,0.03);
+    border:1px solid var(--border);
+    border-radius:8px;
+    color:var(--text);
+    font-family:var(--font-mono);
+    font-size:11.5px;
+    padding:10px 10px;
+    outline:none;
+  }
+  .crypto-address-field:focus{ border-color:var(--primary); }
+  .crypto-copy-btn{
+    flex-shrink:0;
+    background:rgba(255,255,255,0.03);
+    border:1px solid var(--border);
+    border-radius:8px;
+    color:var(--text);
+    font-family:var(--font);
+    font-size:12px;
+    font-weight:700;
+    padding:10px 14px;
+    cursor:pointer;
+    transition:border-color 0.2s ease, background 0.2s ease;
+  }
+  .crypto-copy-btn:hover{ border-color:var(--border-hover); background:var(--primary-soft); }
+  .crypto-copy-btn:focus-visible{ outline:2px solid var(--primary); outline-offset:2px; }
+  .crypto-copy-btn.copied{ background:#2ecc71; border-color:#2ecc71; color:#0c1f12; }
+
+  .crypto-note{
+    font-size:0.76rem;
+    line-height:1.5;
+    color:var(--text-2);
+    text-align:center;
+    margin:0 0 16px;
+  }
+
+  @media (max-width:640px){
+    .header{ padding:0.8rem 1rem; }
+    .mainContainer{ padding:92px 16px 24px; }
+    .headerContent h1{ font-size:1.1rem; }
+    #cart-btn span.cart-label{ display:none; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:0.01ms !important; transition-duration:0.01ms !important; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ PASSWORD GATE ============ -->
+<section id="gate">
+  <div class="gateCard">
+    <div class="lockIcon" id="seal" aria-hidden="true">🔒</div>
+
+    <form id="password-form">
+      <label for="password" class="visually-hidden">Password</label>
+      <input
+        type="password"
+        id="password"
+        autocomplete="off"
+        placeholder="Enter password"
+        autofocus
+      />
+      <button type="submit" id="unlock-btn">Unlock</button>
+    </form>
+    <p id="gate-msg" role="status" aria-live="polite"></p>
+  </div>
+</section>
+
+<!-- ============ SHOP (populated after decryption) ============ -->
+<main id="shop">
+  <header class="header">
+    <div class="headerContent">
+      <h1>🤤</h1>
+      <div class="headerRight">
+        <span class="badge"><span class="badgeDot"></span><span id="badge-text">Loading…</span></span>
+        <button type="button" id="cart-btn" aria-label="View cart" aria-haspopup="dialog">
+          <span class="cart-icon" aria-hidden="true">🛒</span>
+          <span class="cart-label">Cart</span>
+          <span id="cart-count" data-empty="true">0</span>
+          <span id="cart-total"></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="mainContainer">
+    <div class="notification" id="notification-banner" style="display:none;"></div>
+
+    <div class="controls">
+      <div class="search-wrap">
+        <span class="search-icon" aria-hidden="true">🔍</span>
+        <label for="search-input" class="visually-hidden">Search products</label>
+        <input type="text" id="search-input" placeholder="Search products…" autocomplete="off" />
+        <button type="button" id="search-clear" aria-label="Clear search">✕</button>
+      </div>
+      <div class="sort-wrap">
+        <button type="button" id="sort-btn" aria-haspopup="listbox" aria-expanded="false">
+          <span class="sort-btn-label" id="sort-btn-label"><span class="sort-btn-prefix">Sort:</span> Featured</span>
+          <span class="sort-caret" aria-hidden="true">
+            <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+        </button>
+        <div class="sort-menu" id="sort-menu" role="listbox" aria-label="Sort by" tabindex="-1">
+          <button type="button" class="sort-option selected" role="option" aria-selected="true" data-value="default" data-label="Featured">
+            <span>Featured</span><span class="sort-check">✓</span>
+          </button>
+          <button type="button" class="sort-option" role="option" aria-selected="false" data-value="name-asc" data-label="Name: A → Z">
+            <span>Name: A → Z</span><span class="sort-check">✓</span>
+          </button>
+          <button type="button" class="sort-option" role="option" aria-selected="false" data-value="name-desc" data-label="Name: Z → A">
+            <span>Name: Z → A</span><span class="sort-check">✓</span>
+          </button>
+          <button type="button" class="sort-option" role="option" aria-selected="false" data-value="price-asc" data-label="Price: Low → High">
+            <span>Price: Low → High</span><span class="sort-check">✓</span>
+          </button>
+          <button type="button" class="sort-option" role="option" aria-selected="false" data-value="price-desc" data-label="Price: High → Low">
+            <span>Price: High → Low</span><span class="sort-check">✓</span>
+          </button>
+          <button type="button" class="sort-option" role="option" aria-selected="false" data-value="newest" data-label="Newest first">
+            <span>Newest first</span><span class="sort-check">✓</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="type-filters" id="type-filters"><!-- chips injected here --></div>
+
+    <div class="grid" id="product-grid"><!-- cards injected here --></div>
+  </div>
+
+  <footer class="footer">Don’t let a temporary feeling steal a permanent dream.</footer>
+</main>
+
+<!-- ============ CART MODAL ============ -->
+<div id="cart-modal-overlay" class="modal-overlay" style="display:none;" role="presentation">
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="cart-modal-title">
+    <div class="modal-header">
+      <button type="button" id="crypto-back-btn" class="modal-close" aria-label="Back to cart" style="display:none;">←</button>
+      <span class="modal-icon" id="cart-modal-icon" aria-hidden="true">🛒</span>
+      <h2 id="cart-modal-title">Your Cart</h2>
+      <span class="modal-header-count" id="cart-modal-count" style="display:none;"></span>
+      <button type="button" id="cart-close-btn" class="modal-close" aria-label="Close cart">✕</button>
+    </div>
+
+    <div id="cart-modal-body" class="modal-body"></div>
+
+    <div id="crypto-panel" class="modal-body crypto-panel" style="display:none;">
+      <div class="crypto-coin-toggle" role="group" aria-label="Choose cryptocurrency">
+        <button type="button" class="crypto-coin-btn selected" data-coin="btc">
+          <span class="crypto-coin-symbol">₿</span> Bitcoin
+        </button>
+        <button type="button" class="crypto-coin-btn" data-coin="xmr">
+          <span class="crypto-coin-symbol">Ⓜ️</span> Monero
+        </button>
+      </div>
+
+      <div class="crypto-qr-wrap">
+        <div id="crypto-qr" class="crypto-qr"></div>
+      </div>
+
+      <div class="crypto-amount" id="crypto-amount"></div>
+
+      <label class="crypto-address-label" for="crypto-address-field">Send to this address</label>
+      <div class="crypto-address-row">
+        <input type="text" id="crypto-address-field" class="crypto-address-field" readonly />
+        <button type="button" id="crypto-copy-btn" class="crypto-copy-btn">Copy</button>
+      </div>
+
+      <p class="crypto-note">
+        This page can't detect or confirm payments automatically — it only displays the address and amount.
+        After sending, please keep your transaction ID and reach out so we can confirm it manually.
+      </p>
+    </div>
+
+    <div class="modal-footer-wrap" id="cart-modal-footer-wrap">
+      <div class="cart-total-row" id="cart-modal-total-row" style="display:none;">
+        <span>Total</span><span class="cart-total-amt" id="cart-modal-total-amt"></span>
+      </div>
+      <div class="modal-footer" id="cart-footer-default">
+        <button type="button" id="cart-copy-btn" class="modal-secondary-btn">Copy as text</button>
+        <button type="button" id="cart-crypto-btn" class="modal-crypto-btn">
+          <span aria-hidden="true"></span> Pay via Crypto
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!--
+  hash-wasm provides the Argon2id (RFC 9106) implementation used below.
+  It's a static, versioned WASM build served from jsDelivr's npm mirror —
+  pin the major version (@4) so behavior can't change under you, and
+  consider self-hosting this file if you don't want a third-party origin
+  in your page's trust chain at all.
+-->
+<script src="https://cdn.jsdelivr.net/npm/hash-wasm@4"></script>
+<script type="module">
+  // The "qrcode" npm package has never shipped a prebuilt browser/UMD
+  // bundle in its published tarball (no build/ directory), so a plain
+  // <script src=".../build/qrcode.min.js"> 404s — that's why the QR
+  // code wasn't rendering. jsdelivr can still serve it as a real ES
+  // module, bundled on the fly from lib/browser.js, via the +esm
+  // suffix; we import it here and hang it on window so the rest of
+  // the page (which expects a global QRCode.toCanvas(...)) still works.
+  import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
+  window.QRCode = QRCode;
+</script>
+<script src="enc_products.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  // Encrypted product payload is loaded from enc_products.js, which exposes
+  // getEncryptedPayload() and returns the payload object below. It was
+  // generated from products.js via encrypt.mjs using Argon2id (memory-hard
+  // key derivation, RFC 9106) + AES-GCM (256-bit). Nothing about the
+  // inventory exists in plaintext until the correct password is entered in
+  // the browser.
+  //
+  // Why Argon2id instead of PBKDF2: this page is fully static, so the
+  // ciphertext and every parameter needed to attack it are sitting in a
+  // public JS file. There's no server to rate-limit guesses — anyone can
+  // download enc_products.js and try passwords offline as fast as their
+  // hardware allows. PBKDF2 is cheap to parallelize on GPUs (billions of
+  // guesses/sec). Argon2id is deliberately memory-hard, so each guess needs
+  // its full memory allocation (128 MiB by default here) with no shortcut,
+  // which collapses GPU/ASIC throughput by orders of magnitude compared to
+  // PBKDF2 at the same wall-clock cost. AES-256-GCM itself was never the
+  // weak point — direct brute force against a 256-bit key is infeasible
+  // regardless of hardware. The real defense is: expensive-per-guess KDF +
+  // a password with enough entropy that guessing it is impractical even at
+  // one guess every couple of seconds. A short or dictionary-based password
+  // is still crackable no matter how the KDF is tuned.
+  const PAYLOAD = getEncryptedPayload();
+
+  const b64ToBuf = (b64) => Uint8Array.from(atob(b64), c => c.charCodeAt(0)).buffer;
+  const hexToBuf = (hex) => Uint8Array.from(hex.match(/.{2}/g).map(b => parseInt(b, 16)));
+
+  async function deriveKey(password, saltBuf){
+    const keyHex = await hashwasm.argon2id({
+      password,
+      salt: new Uint8Array(saltBuf),
+      parallelism: PAYLOAD.parallelism,
+      iterations: PAYLOAD.iterations,
+      memorySize: PAYLOAD.memorySize, // KiB
+      hashLength: 32,
+      outputType: "hex",
+    });
+    return crypto.subtle.importKey(
+      "raw", hexToBuf(keyHex), "AES-GCM", false, ["decrypt"]
+    );
+  }
+
+  async function tryDecrypt(password){
+    const salt = b64ToBuf(PAYLOAD.salt);
+    const iv = b64ToBuf(PAYLOAD.iv);
+    const ciphertext = b64ToBuf(PAYLOAD.ciphertext);
+    const key = await deriveKey(password, salt);
+    const plainBuf = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, ciphertext);
+    const json = new TextDecoder().decode(plainBuf);
+    return JSON.parse(json);
+  }
+
+  function escapeHtml(str){
+    const div = document.createElement("div");
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function fmtPrice(n){
+    return "$" + Number(n).toFixed(2).replace(/\.00$/, "");
+  }
+
+  // ---------------- Stock status helpers ----------------
+  // Expected item field: item.StockStatus, one of:
+  //   "out"        -> Out of stock (add-to-cart disabled, size buttons disabled)
+  //   "low"        -> Low stock (informational only, still purchasable)
+  //   "restocked"  -> Back in stock / restocked (informational only)
+  //   anything else / missing -> normal, no stock badge shown
+  const STOCK_META = {
+    out:       { label: "Out of stock", badge: "Out of stock" },
+    low:       { label: "Low stock",    badge: "Low stock" },
+    restocked: { label: "Restocked",    badge: "Restocked" },
+  };
+
+  function normalizeStock(item){
+    const raw = (item.StockStatus || "").toString().trim().toLowerCase();
+    return STOCK_META[raw] ? raw : null;
+  }
+
+  function renderNotification(text){
+    const banner = document.getElementById("notification-banner");
+    if(text){
+      banner.textContent = text;
+      banner.style.display = "flex";
+    }else{
+      banner.style.display = "none";
+    }
+  }
+
+  function updateBadge(items){
+    const badgeText = document.getElementById("badge-text");
+    if(badgeText){
+      badgeText.textContent = `${items.length} product${items.length === 1 ? "" : "s"}`;
+    }
+  }
+
+  // ---------------- Catalog state (search / filter / sort) ----------------
+  // allItems holds the full, unfiltered catalog exactly as decrypted.
+  // The controls below only affect what's rendered — cart contents and the
+  // original item order are never mutated.
+  let allItems = [];
+  let activeType = "all";
+  let searchQuery = "";
+  let sortMode = "default";
+
+  function lowestPrice(item){
+    const values = Object.values(item.Amounts || {}).map(Number).filter(n => !isNaN(n));
+    return values.length ? Math.min(...values) : 0;
+  }
+
+  function normalizeCategory(item){
+    const raw = (item.Category || "").toString().trim();
+    return raw || "Other";
+  }
+
+  function buildTypeFilters(items){
+    const wrap = document.getElementById("type-filters");
+    wrap.innerHTML = "";
+
+    const counts = new Map();
+    items.forEach(item => {
+      const c = normalizeCategory(item);
+      counts.set(c, (counts.get(c) || 0) + 1);
+    });
+
+    // Only show the filter row when there's more than one distinct category
+    if(counts.size < 2){
+      wrap.style.display = "none";
+      activeType = "all";
+      return;
+    }
+    wrap.style.display = "flex";
+
+    const categories = Array.from(counts.keys()).sort((a, b) => a.localeCompare(b));
+
+    const makeChip = (label, value, count) => {
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "type-chip" + (activeType === value ? " active" : "");
+      chip.dataset.category = value;
+      chip.innerHTML = `${escapeHtml(label)} <span class="chip-count">${count}</span>`;
+      chip.addEventListener("click", () => {
+        activeType = value;
+        buildTypeFilters(allItems); // refresh active states
+        applyAndRender();
+      });
+      return chip;
+    };
+
+    wrap.appendChild(makeChip("All", "all", items.length));
+    categories.forEach(c => wrap.appendChild(makeChip(c, c, counts.get(c))));
+  }
+
+  function getFilteredSortedItems(){
+    const q = searchQuery.trim().toLowerCase();
+
+    let result = allItems.filter(item => {
+      if(activeType !== "all" && normalizeCategory(item) !== activeType) return false;
+      if(q){
+        const haystack = `${item.Title || ""} ${item.Description || ""} ${item.Category || ""}`.toLowerCase();
+        if(!haystack.includes(q)) return false;
+      }
+      return true;
+    });
+
+    switch(sortMode){
+      case "name-asc":
+        result = result.slice().sort((a, b) => (a.Title || "").localeCompare(b.Title || ""));
+        break;
+      case "name-desc":
+        result = result.slice().sort((a, b) => (b.Title || "").localeCompare(a.Title || ""));
+        break;
+      case "price-asc":
+        result = result.slice().sort((a, b) => lowestPrice(a) - lowestPrice(b));
+        break;
+      case "price-desc":
+        result = result.slice().sort((a, b) => lowestPrice(b) - lowestPrice(a));
+        break;
+      case "newest":
+        result = result.slice().sort((a, b) => (b.IsNew ? 1 : 0) - (a.IsNew ? 1 : 0));
+        break;
+      default:
+        // "default" / Featured: preserve original catalog order
+        break;
+    }
+
+    return result;
+  }
+
+  function applyAndRender(){
+    const filtered = getFilteredSortedItems();
+    renderProducts(filtered);
+  }
+
+  // ---------------- Cart ----------------
+  // In-memory only (no localStorage) — resets on reload, which is fine
+  // for this static, password-gated single-session shop.
+  const cart = []; // { title, size, price, qty, photo }
+
+  function cartTotal(){
+    return cart.reduce((sum, line) => sum + line.price * line.qty, 0);
+  }
+  function cartCount(){
+    return cart.reduce((sum, line) => sum + line.qty, 0);
+  }
+
+  function updateCartUI(){
+    const countEl = document.getElementById("cart-count");
+    const count = cartCount();
+
+    countEl.textContent = String(count);
+    countEl.dataset.empty = count === 0 ? "true" : "false";
+
+    countEl.classList.remove("bump");
+    // force reflow so the bump animation can retrigger on rapid adds
+    void countEl.offsetWidth;
+    countEl.classList.add("bump");
+
+    // Keep the open modal in sync if items change while it's visible
+    if(cartOverlay.style.display === "flex"){
+      renderCartModal();
+    }
+  }
+
+  function addToCart(title, size, price, photo){
+    const existing = cart.find(line => line.title === title && line.size === size);
+    if(existing){
+      existing.qty += 1;
+    }else{
+      cart.push({ title, size, price, qty: 1, photo: photo || "" });
+    }
+    updateCartUI();
+  }
+
+  function removeFromCart(index){
+    cart.splice(index, 1);
+    updateCartUI();
+  }
+
+  function setLineQty(index, qty){
+    if(qty <= 0){
+      removeFromCart(index);
+      return;
+    }
+    cart[index].qty = qty;
+    updateCartUI();
+  }
+
+  function cartAsText(){
+    if(cart.length === 0){
+      return "Your cart is empty.";
+    }
+    const lines = cart.map(l => `${l.title} (${l.size}) x${l.qty} — ${fmtPrice(l.price * l.qty)}`);
+    lines.push("", `Total: ${fmtPrice(cartTotal())}`);
+    return lines.join("\n");
+  }
+
+  // ---------------- Cart modal ----------------
+  const cartOverlay = document.getElementById("cart-modal-overlay");
+  const cartModalBody = document.getElementById("cart-modal-body");
+  const cartModalCount = document.getElementById("cart-modal-count");
+  const cartModalTotalRow = document.getElementById("cart-modal-total-row");
+  const cartModalTotalAmt = document.getElementById("cart-modal-total-amt");
+  const cartBtn = document.getElementById("cart-btn");
+  const cartCloseBtn = document.getElementById("cart-close-btn");
+  const cartCopyBtn = document.getElementById("cart-copy-btn");
+  let copyResetTimer = null;
+
+  function renderCartModal(){
+    cartModalBody.innerHTML = "";
+
+    if(cart.length === 0){
+      cartModalCount.style.display = "none";
+      cartModalTotalRow.style.display = "none";
+
+      const empty = document.createElement("div");
+      empty.className = "cart-empty";
+      empty.innerHTML = `
+        <div class="cart-empty-icon" aria-hidden="true">🛒</div>
+        <strong>Your cart is empty</strong>
+        Add something delicious to get started.
+      `;
+      cartModalBody.appendChild(empty);
+      cartCopyBtn.disabled = true;
+      return;
+    }
+
+    const count = cartCount();
+    cartModalCount.style.display = "inline-block";
+    cartModalCount.textContent = `${count} item${count === 1 ? "" : "s"}`;
+    cartModalTotalRow.style.display = "flex";
+    cartModalTotalAmt.textContent = fmtPrice(cartTotal());
+    cartCopyBtn.disabled = false;
+
+    cart.forEach((line, index) => {
+      const row = document.createElement("div");
+      row.className = "cart-line";
+      row.innerHTML = `
+        <div class="cart-line-thumb">
+          ${line.photo ? `<img src="${escapeHtml(line.photo)}" alt="" loading="lazy" />` : ""}
+        </div>
+        <div class="cart-line-info">
+          <div class="cart-line-title">${escapeHtml(line.title)}</div>
+          <div class="cart-line-meta">${escapeHtml(line.size)}</div>
+          <div class="cart-line-price">${fmtPrice(line.price * line.qty)}</div>
+        </div>
+        <div class="cart-line-end">
+          <div class="qty-stepper">
+            <button type="button" class="qty-minus" aria-label="Decrease quantity">−</button>
+            <span class="qty-value">${line.qty}</span>
+            <button type="button" class="qty-plus" aria-label="Increase quantity">+</button>
+          </div>
+          <button type="button" class="cart-line-remove" aria-label="Remove ${escapeHtml(line.title)} from cart">Remove</button>
+        </div>
+      `;
+      row.querySelector(".qty-minus").addEventListener("click", () => setLineQty(index, line.qty - 1));
+      row.querySelector(".qty-plus").addEventListener("click", () => setLineQty(index, line.qty + 1));
+      row.querySelector(".cart-line-remove").addEventListener("click", () => removeFromCart(index));
+      cartModalBody.appendChild(row);
+    });
+  }
+
+  function openCartModal(){
+    renderCartModal();
+    cartOverlay.style.display = "flex";
+    cartCloseBtn.focus();
+    document.addEventListener("keydown", onCartKeydown);
+  }
+
+  function closeCartModal(){
+    cartOverlay.style.display = "none";
+    document.removeEventListener("keydown", onCartKeydown);
+    // If the crypto panel was open, reset back to the cart view for next time
+    if(cryptoPanel && cryptoPanel.style.display !== "none"){
+      cryptoPanel.style.display = "none";
+      cryptoBackBtn.style.display = "none";
+      cartModalBody.style.display = "block";
+      cartFooterDefault.style.display = "flex";
+      cartModalIcon.textContent = "🛒";
+      document.getElementById("cart-modal-title").textContent = "Your Cart";
+    }
+    cartBtn.focus();
+  }
+
+  function onCartKeydown(e){
+    if(e.key === "Escape"){
+      closeCartModal();
+    }
+  }
+
+  cartBtn.addEventListener("click", openCartModal);
+  cartCloseBtn.addEventListener("click", closeCartModal);
+  cartOverlay.addEventListener("click", (e) => {
+    if(e.target === cartOverlay){ closeCartModal(); }
+  });
+
+  cartCopyBtn.addEventListener("click", async () => {
+    const text = cartAsText();
+    try{
+      await navigator.clipboard.writeText(text);
+    }catch(err){
+      // Fallback for browsers/contexts without Clipboard API access
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      try{ document.execCommand("copy"); }catch(_e){ /* no-op */ }
+      document.body.removeChild(ta);
+    }
+
+    const original = cartCopyBtn.textContent;
+    cartCopyBtn.textContent = "Copied ✓";
+    cartCopyBtn.classList.add("copied");
+    clearTimeout(copyResetTimer);
+    copyResetTimer = setTimeout(() => {
+      cartCopyBtn.textContent = original;
+      cartCopyBtn.classList.remove("copied");
+    }, 1300);
+  });
+
+  // ---------------- Crypto payment panel ----------------
+  // Addresses come from the decrypted payload's BitcoinAddress /
+  // MoneroAddress fields (set via setCryptoAddresses, called once
+  // decryption succeeds) rather than being hardcoded here. Both coins
+  // share one address each for every customer, since this is a static
+  // page with no backend to issue per-order addresses. There is no
+  // automatic payment detection here — see the note rendered in the
+  // panel itself. This deliberately does NOT try to convert the USD
+  // total into a BTC/XMR amount: that would require a live exchange-rate
+  // feed, and showing a stale or fabricated rate is worse than not
+  // showing one. The customer sends the equivalent value at whatever
+  // rate they check themselves.
+  const CRYPTO_ADDRESSES = {
+    btc: null,
+    xmr: null,
+  };
+  const CRYPTO_URI_SCHEME = {
+    btc: "bitcoin",
+    xmr: "Monero",
+  };
+  const CRYPTO_LABEL = {
+    btc: "BTC",
+    xmr: "XMR",
+  };
+
+  const cartModalIcon = document.getElementById("cart-modal-icon");
+  const cartCryptoBtn = document.getElementById("cart-crypto-btn");
+  const cryptoBackBtn = document.getElementById("crypto-back-btn");
+  const cryptoPanel = document.getElementById("crypto-panel");
+  const cryptoCoinBtns = Array.from(document.querySelectorAll(".crypto-coin-btn"));
+  const cryptoQrEl = document.getElementById("crypto-qr");
+  const cryptoAmountEl = document.getElementById("crypto-amount");
+  const cryptoAddressField = document.getElementById("crypto-address-field");
+  const cryptoCopyBtn = document.getElementById("crypto-copy-btn");
+  const cartFooterDefault = document.getElementById("cart-footer-default");
+  let cryptoCopyResetTimer = null;
+  let activeCoin = "btc";
+
+  // Called once per successful decrypt with whatever addresses the
+  // catalog provided (either may be missing/empty). Enables/disables the
+  // "Pay via Crypto" button and the individual coin toggle buttons to
+  // match what's actually configured.
+  function setCryptoAddresses(btcAddress, xmrAddress){
+    CRYPTO_ADDRESSES.btc = (btcAddress || "").trim() || null;
+    CRYPTO_ADDRESSES.xmr = (xmrAddress || "").trim() || null;
+
+    const anyAvailable = Boolean(CRYPTO_ADDRESSES.btc || CRYPTO_ADDRESSES.xmr);
+    if(!anyAvailable){
+      // Nothing hides more quietly than a mis-shaped payload. If this fires,
+      // check products.js for top-level, non-empty BitcoinAddress /
+      // MoneroAddress strings, and make sure enc_products.js was
+      // regenerated (via encrypt.mjs) after they were added.
+      console.warn("Pay via Crypto hidden: no BitcoinAddress/MoneroAddress found in the decrypted payload.");
+    }
+    cartCryptoBtn.style.display = anyAvailable ? "inline-flex" : "none";
+
+    cryptoCoinBtns.forEach(coinBtn => {
+      const coin = coinBtn.dataset.coin;
+      const available = Boolean(CRYPTO_ADDRESSES[coin]);
+      coinBtn.disabled = !available;
+      coinBtn.style.display = available ? "inline-flex" : "none";
+    });
+
+    // Default the active coin to whichever one is actually configured
+    if(!CRYPTO_ADDRESSES[activeCoin]){
+      activeCoin = CRYPTO_ADDRESSES.btc ? "btc" : (CRYPTO_ADDRESSES.xmr ? "xmr" : "btc");
+      cryptoCoinBtns.forEach(b => b.classList.toggle("selected", b.dataset.coin === activeCoin));
+    }
+  }
+
+  async function renderCryptoQr(coin){
+    const address = CRYPTO_ADDRESSES[coin];
+    const scheme = CRYPTO_URI_SCHEME[coin];
+
+    if(!address){
+      cryptoQrEl.innerHTML = `<span class="crypto-qr-loading">No ${CRYPTO_LABEL[coin]} address configured</span>`;
+      return;
+    }
+
+    const uri = `${scheme}:${address}`;
+    cryptoQrEl.innerHTML = `<span class="crypto-qr-loading">Generating…</span>`;
+
+    try{
+      if(typeof QRCode === "undefined"){
+        throw new Error("QR library unavailable");
+      }
+      const canvas = document.createElement("canvas");
+      await QRCode.toCanvas(canvas, uri, {
+        width: 340,
+        margin: 1,
+        color: { dark: "#0b0b0b", light: "#ffffff" },
+      });
+      cryptoQrEl.innerHTML = "";
+      cryptoQrEl.appendChild(canvas);
+    }catch(err){
+      cryptoQrEl.innerHTML = `<span class="crypto-qr-loading">QR unavailable — use the address below</span>`;
+    }
+  }
+
+  function updateCryptoView(){
+    const address = CRYPTO_ADDRESSES[activeCoin];
+    cryptoAddressField.value = address || "Address not configured";
+    cryptoCopyBtn.disabled = !address;
+    cryptoAmountEl.innerHTML = `
+      ${fmtPrice(cartTotal())}
+      <span class="crypto-amount-usd">Send the equivalent value in ${CRYPTO_LABEL[activeCoin]} at the current rate</span>
+    `;
+    renderCryptoQr(activeCoin);
+  }
+
+  function openCryptoPanel(){
+    cartModalBody.style.display = "none";
+    cartFooterDefault.style.display = "none";
+    cartModalTotalRow.style.display = "none";
+    cartModalCount.style.display = "none";
+    cryptoPanel.style.display = "flex";
+    cryptoBackBtn.style.display = "inline-flex";
+    cartModalIcon.textContent = "₿";
+    document.getElementById("cart-modal-title").textContent = "Pay via Crypto";
+    updateCryptoView();
+    cryptoBackBtn.focus();
+  }
+
+  function closeCryptoPanel(){
+    cryptoPanel.style.display = "none";
+    cryptoBackBtn.style.display = "none";
+    cartModalBody.style.display = "block";
+    cartFooterDefault.style.display = "flex";
+    cartModalIcon.textContent = "🛒";
+    document.getElementById("cart-modal-title").textContent = "Your Cart";
+    renderCartModal(); // restores total row / count visibility correctly
+    cartCryptoBtn.focus();
+  }
+
+  cartCryptoBtn.addEventListener("click", openCryptoPanel);
+  cryptoBackBtn.addEventListener("click", closeCryptoPanel);
+
+  cryptoCoinBtns.forEach(btn => {
+    btn.addEventListener("click", () => {
+      activeCoin = btn.dataset.coin;
+      cryptoCoinBtns.forEach(b => b.classList.toggle("selected", b === btn));
+      updateCryptoView();
+    });
+  });
+
+  cryptoCopyBtn.addEventListener("click", async () => {
+    const address = CRYPTO_ADDRESSES[activeCoin];
+    try{
+      await navigator.clipboard.writeText(address);
+    }catch(err){
+      cryptoAddressField.select();
+      try{ document.execCommand("copy"); }catch(_e){ /* no-op */ }
+    }
+    const original = cryptoCopyBtn.textContent;
+    cryptoCopyBtn.textContent = "Copied ✓";
+    cryptoCopyBtn.classList.add("copied");
+    clearTimeout(cryptoCopyResetTimer);
+    cryptoCopyResetTimer = setTimeout(() => {
+      cryptoCopyBtn.textContent = original;
+      cryptoCopyBtn.classList.remove("copied");
+    }, 1300);
+  });
+
+  function renderProducts(items){
+    const grid = document.getElementById("product-grid");
+    grid.innerHTML = "";
+
+    if(items.length === 0){
+      const empty = document.createElement("div");
+      empty.className = "empty-state";
+      empty.style.gridColumn = "1 / -1";
+      empty.innerHTML = searchQuery.trim()
+        ? `No products match <strong>"${escapeHtml(searchQuery.trim())}"</strong>.`
+        : `No products in this category.`;
+      grid.appendChild(empty);
+      return;
+    }
+
+    items.forEach((item) => {
+      const sizes = Object.keys(item.Amounts || {});
+      let selectedSize = sizes[0];
+
+      const stockKey = normalizeStock(item); // "out" | "low" | "restocked" | null
+      const isOut = stockKey === "out";
+      const stockMeta = stockKey ? STOCK_META[stockKey] : null;
+
+      const card = document.createElement("article");
+      card.className = "card" + (isOut ? " out-of-stock" : "");
+
+      card.innerHTML = `
+        <div class="photo-wrap">
+          <img src="${escapeHtml(item.PhotoURL || "")}" alt="${escapeHtml(item.Title || "")}" loading="lazy" />
+          ${item.IsNew ? '<span class="newBadge">New product</span>' : ""}
+          ${stockMeta ? `<span class="stockBadge ${stockKey}">${escapeHtml(stockMeta.badge)}</span>` : ""}
+        </div>
+        <div class="body">
+          <h3>${escapeHtml(item.Title || "")}</h3>
+          <p class="desc">${escapeHtml(item.Description || "")}</p>
+          <div class="amounts" role="group" aria-label="Select amount">
+            ${sizes.map((size, i) => `
+              <button type="button" class="size-btn${i === 0 ? " selected" : ""}" data-size="${escapeHtml(size)}"${isOut ? " disabled" : ""}>
+                ${escapeHtml(size)}
+              </button>
+            `).join("")}
+          </div>
+          <div class="row">
+            <span class="price">
+              ${fmtPrice(item.Amounts[selectedSize])}
+              <span class="unit">/ ${escapeHtml(selectedSize)}</span>
+            </span>
+            <button type="button" class="add-to-cart-btn"${isOut ? " disabled" : ""}>${isOut ? "Out of stock" : "Add to cart"}</button>
+          </div>
+        </div>
+      `;
+
+      const priceEl = card.querySelector(".price");
+      const addBtn = card.querySelector(".add-to-cart-btn");
+
+      card.querySelectorAll(".size-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          if(isOut) return;
+          card.querySelectorAll(".size-btn").forEach(b => b.classList.remove("selected"));
+          btn.classList.add("selected");
+          selectedSize = btn.dataset.size;
+          priceEl.innerHTML = `${fmtPrice(item.Amounts[selectedSize])} <span class="unit">/ ${escapeHtml(selectedSize)}</span>`;
+        });
+      });
+
+      addBtn.addEventListener("click", () => {
+        if(isOut) return;
+        addToCart(item.Title, selectedSize, item.Amounts[selectedSize], item.PhotoURL);
+        const originalText = addBtn.textContent;
+        addBtn.textContent = "Added ✓";
+        addBtn.classList.add("added");
+        setTimeout(() => {
+          addBtn.textContent = originalText;
+          addBtn.classList.remove("added");
+        }, 900);
+      });
+
+      grid.appendChild(card);
+    });
+  }
+
+  // ---------------- Controls wiring ----------------
+  const searchInput = document.getElementById("search-input");
+  const searchClear = document.getElementById("search-clear");
+
+  searchInput.addEventListener("input", () => {
+    searchQuery = searchInput.value;
+    searchClear.classList.toggle("visible", searchQuery.length > 0);
+    applyAndRender();
+  });
+
+  searchClear.addEventListener("click", () => {
+    searchQuery = "";
+    searchInput.value = "";
+    searchClear.classList.remove("visible");
+    searchInput.focus();
+    applyAndRender();
+  });
+
+  // ---------------- Custom sort dropdown ----------------
+  const sortBtn = document.getElementById("sort-btn");
+  const sortBtnLabel = document.getElementById("sort-btn-label");
+  const sortMenu = document.getElementById("sort-menu");
+  const sortOptions = Array.from(sortMenu.querySelectorAll(".sort-option"));
+
+  function setSortLabel(text){
+    sortBtnLabel.innerHTML = `<span class="sort-btn-prefix">Sort:</span> ${escapeHtml(text)}`;
+  }
+
+  function openSortMenu(){
+    sortMenu.classList.add("open");
+    sortBtn.setAttribute("aria-expanded", "true");
+    document.addEventListener("click", onDocClickForSort);
+    document.addEventListener("keydown", onSortKeydown);
+  }
+
+  function closeSortMenu(){
+    sortMenu.classList.remove("open");
+    sortBtn.setAttribute("aria-expanded", "false");
+    document.removeEventListener("click", onDocClickForSort);
+    document.removeEventListener("keydown", onSortKeydown);
+  }
+
+  function onDocClickForSort(e){
+    if(!sortMenu.contains(e.target) && !sortBtn.contains(e.target)){
+      closeSortMenu();
+    }
+  }
+
+  function onSortKeydown(e){
+    if(e.key === "Escape"){
+      closeSortMenu();
+      sortBtn.focus();
+    }
+  }
+
+  sortBtn.addEventListener("click", () => {
+    if(sortMenu.classList.contains("open")){
+      closeSortMenu();
+    }else{
+      openSortMenu();
+    }
+  });
+
+  sortOptions.forEach(opt => {
+    opt.addEventListener("click", () => {
+      sortMode = opt.dataset.value;
+      sortOptions.forEach(o => {
+        o.classList.toggle("selected", o === opt);
+        o.setAttribute("aria-selected", o === opt ? "true" : "false");
+      });
+      setSortLabel(opt.dataset.label);
+      closeSortMenu();
+      applyAndRender();
+    });
+  });
+
+  const form = document.getElementById("password-form");
+  const input = document.getElementById("password");
+  const msg = document.getElementById("gate-msg");
+  const gate = document.getElementById("gate");
+  const shop = document.getElementById("shop");
+  const seal = document.getElementById("seal");
+  const btn = document.getElementById("unlock-btn");
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const password = input.value;
+    if(!password){ return; }
+
+    msg.textContent = "decrypting…";
+    msg.classList.add("working");
+    btn.disabled = true;
+
+    // Let the "decrypting…" state paint before the heavy Argon2id
+    // computation runs (it can take a second or two on purpose now —
+    // see the comment above PAYLOAD).
+    await new Promise(r => setTimeout(r, 50));
+
+    try{
+      const decrypted = await tryDecrypt(password);
+      // Supports both shapes: a plain array of items (old format), or
+      // { Items, Notification, BitcoinAddress, MoneroAddress } (new
+      // format from products.js). Crypto addresses are only present in
+      // the object shape — a plain array leaves them unset, and the
+      // "Pay via Crypto" button hides itself in that case.
+      const items = Array.isArray(decrypted) ? decrypted : (decrypted.Items || []);
+      const notification = Array.isArray(decrypted) ? null : (decrypted.Notification || null);
+      const btcAddress = Array.isArray(decrypted) ? null : (decrypted.BitcoinAddress || null);
+      const xmrAddress = Array.isArray(decrypted) ? null : (decrypted.MoneroAddress || null);
+
+      msg.classList.remove("working");
+      msg.textContent = "";
+      seal.classList.add("melt");
+      allItems = items;
+      updateBadge(items);
+      renderNotification(notification);
+      setCryptoAddresses(btcAddress, xmrAddress);
+      buildTypeFilters(allItems);
+      applyAndRender();
+      updateCartUI();
+      setTimeout(() => {
+        gate.style.display = "none";
+        shop.style.display = "block";
+        shop.focus?.();
+      }, 350);
+    }catch(err){
+      msg.classList.remove("working");
+      msg.textContent = "wrong password — try again";
+      btn.disabled = false;
+      input.value = "";
+      input.focus();
+      const card = document.querySelector(".gateCard");
+      card.style.transition = "transform 0.08s";
+      card.style.transform = "translateX(-6px)";
+      setTimeout(() => { card.style.transform = "translateX(6px)"; }, 80);
+      setTimeout(() => { card.style.transform = "translateX(0)"; }, 160);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>
